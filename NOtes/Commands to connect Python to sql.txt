@@ -1,0 +1,11 @@
+commands use in bash
+
+where pyhton
+
+
+
+"C:\Users\risha\AppData\Local\Programs\Python\Python313\python.exe" -m pip install mysql-connector-python
+
+
+
+"C:\Users\risha\AppData\Local\Programs\Python\Python313\python.exe" -m pip install --upgrade pip
