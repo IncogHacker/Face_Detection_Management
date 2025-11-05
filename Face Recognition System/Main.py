@@ -26,7 +26,7 @@ class Face_Recognition_System:
         height= self.root.winfo_screenheight()
         print(f"Screen Width: {width}, {height}")
 
-
+        
 
 
         #  NOW Adding the image in the Window

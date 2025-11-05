@@ -1,6 +1,8 @@
 from tkinter import*
 from tkinter import ttk  #Button, Label, Entry, Frame, etc.
-from PIL import Image, ImageTk ,ImageDraw                        #PIL stands for Python Imaging Library — it's a library in Python that adds image processing capabilities to your Python interpreter.
+from PIL import Image, ImageTk ,ImageDraw                     
+
+ #PIL stands for Python Imaging Library — it's a library in Python that adds image processing capabilities to your Python interpreter.
 import cv2
 
 from tkinter import messagebox  # this import messagebox so we can use in showing error
@@ -106,6 +108,7 @@ class Student :
         Year_combobox["values"]=("Select-Year","2021-24","2024-27","2027-30","2030-33","2033-36")
         Year_combobox.current(0)
         Year_combobox.grid(row=1,column=1,padx=10,sticky=W)
+        
 
           
         Semester=Label(in_frame1,text="Semester:", font=("times new roman",12,"bold"))
@@ -187,7 +190,7 @@ class Student :
 
         #Creating radio BUtton
         self.var_radio=StringVar()
-        Radiobutton1_select=ttk.Radiobutton(in_frame2,variable=self.var_radio,text="Take Photo Sample",value="Yes")
+        Radiobutton1_select=ttk.Radiobutton(in_frame2,command=self.Generate_Datasheet,variable=self.var_radio,text="Take Photo Sample",value="Yes")
         Radiobutton1_select.grid(row=6,column=0,pady=20)
 
         
@@ -470,6 +473,7 @@ class Student :
                 if Delete>0:
                    conn=mysql.connector.connect(host="localhost",username="Rishabh",password="Alfa@123456789",database="face_recognition_data")
                    my_cursor=conn.cursor()
+
  #writing queries for sql 
                    sql="delete from students where Student_ID=%s"
                    value=(self.var_StudentId.get(),)
@@ -507,7 +511,118 @@ class Student :
 
 
 
-        #===================
+        #===================Genrating A photo Sample====================
+
+    def Generate_Datasheet(self):
+        if self.var_department.get()=="Select Department" or self.var_courses.get()=="" or self.var_years.get()=="" or self.var_Semester=="" or self.var_StudentId.get()=="" or self.var_Student_Name.get()=="" or self.var_Division.get()=="Division" or self.var_Roll_No.get()=="" or self.var_Gender.get()=="Gender" or self.var_DOB.get()=="" or self.var_Email.get()=="" or self.var_Phone_No.get()=="" or self.var_Address.get()=="" or self.var_Teacher.get()=="" or self.var_radio.get()=="":
+               
+         messagebox.showerror("Error","ALL Fields are Required",parent=self.root)
+        else:
+            try:
+                    conn=mysql.connector.connect(host="localhost",username="Rishabh",password="Alfa@123456789",database="face_recognition_data" )
+                    my_cursor=conn.cursor()
+                    my_cursor.execute("select * from students")
+                    my_result=my_cursor.fetchall()
+
+                    id=0
+                    for x in my_result:
+                        id+=1
+                    my_cursor.execute("update students set Department=%s,Course=%s,Year=%s,Semester=%s,Name=%s,Division=%s,Roll_No=%s,Gender=%s,DOB=%s,Email=%s,Phone=%s,Adress=%s,Teacher=%s,PhotoSample=%s where Student_ID=%s",(
+                                                                                                                self.var_department.get(),
+                                                                                                                self.var_courses.get(),
+                                                                                                                self.var_years.get(),
+                                                                                                                self.var_Semester.get(),
+                                                                                                                self.var_Student_Name.get(),
+                                                                                                                self.var_Division.get(),
+                                                                                                                self.var_Roll_No.get(),
+                                                                                                                self.var_Gender.get(),
+                                                                                                                self.var_DOB.get(),
+                                                                                                                self.var_Email.get(),
+                                                                                                                self.var_Phone_No.get(),
+                                                                                                                self.var_Address.get(),
+                                                                                                                self.var_Teacher.get(),
+                                                                                                                self.var_radio.get(),
+                                                                                                                self.var_StudentId.get()
+                                     
+                      ))    
+                    
+
+                    conn.commit()
+                    self.fetch_data()
+                    self.Reset_Fill()
+                    conn.close()
+
+
+
+                    # Getting xml file or Loading xml file  from python location  only for face frontal 
+                    face_classiefier=cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+             
+                    
+                    def face_cropped(img):
+                        #!Convert colourfull to grayscale coz it have one shade not like RGB 3-shades easy to detect
+                        # This line converts a color image (img) from BGR (Blue, Green, Red) format to Grayscale format, and stores the result in the variable gray.
+                        grey=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+
+                        #!Detect faces
+                        # This line is using OpenCV’s Haar Cascade classifier to detect faces in the grayscale image.
+                        #Scalebehaviour=1.3=30% shrink to 24*24---fast but not precise
+                        #minneighbors=5 =means 5 overlapping in one place so it is face
+                        face=face_classiefier.detectMultiScale(grey,1.3,5)
+
+                        #!Making rectangle for Face
+                        for(x,y,w,h) in face:
+                            face_cropped=img[y : y+h, x : x+w]
+                            return face_cropped
+                        
+                        #open a camera
+                    camera=cv2.VideoCapture(0)#opens a camera 0-for default camera for other camera write 1
+
+                    #jab bhi capture krein images ko then it stored in this variable
+                    img_id=0
+                    while True:# Agar Img_id 1 hua to true hoga aur run krega
+
+                        ret,my_frames=camera.read() # idhar My_frames me jo click kiyein wo stored hoga  
+
+                        if face_cropped(my_frames) is not None: # agra ye khali nhi hua to aage jayega
+                                    
+                                    img_id+=1
+
+                                        #cropping image that we taken
+                                    crop_image=cv2.resize(face_cropped(my_frames),(450,450)) 
+
+                                    #now again convert BGR to grey Scale
+                                    crop_image=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
+
+                                    #Storing Image In file
+                                    image_file_path="/Face Recognition System/Images_Data "+str(id)+"."+str(img_id)+".jpg"
+                                    
+                                    # Final Saving Step (you probably have this later):
+                                    cv2.imwrite(image_file_path,crop_image)
+
+                                    #This function overlays text on an image or video frame.
+                                    cv2.putText(crop_image,str(img_id),(50,50),cv2.FONT_HERSHEY_COMPLEX,2,(0,255,0),2)
+
+                                    #Show Camera
+                                    cv2.imshow("Cropped Face",crop_image)
+
+                        #limit the capture 
+                        if cv2.waitKey(1)==13 or int(img_id)==100:#total image lega 100
+                            break
+
+                    camera.release()
+                    cv2.destroyAllWindows()
+                    messagebox.showinfo("Result","Generating Data Set Completed")    
+
+
+                        
+
+                    
+
+
+            except Exception as es:
+                messagebox.showerror("Error",f"Due To:{str(es)}", parent=self.root)    
+                   
+     
 
 
 
